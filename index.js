@@ -23,8 +23,14 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: ["https://www.nodeskdeveloper.com", "https://nodeskdeveloper.com"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: (origin, callback) => {
+      const allowed = ["https://www.nodeskdeveloper.com", "https://nodeskdeveloper.com"];
+      if (!origin || allowed.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS blocked"));
+      }
+    },
     credentials: true,
   })
 );
