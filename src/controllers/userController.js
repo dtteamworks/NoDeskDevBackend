@@ -1,8 +1,10 @@
-import User from "../models/User.js"
+import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "1f92ab8e4c31b7c9d2f4e8a7c6d91f2837f4ab12e9c8d7a6f3c2b1a9d8e7f6c4";
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  "1f92ab8e4c31b7c9d2f4e8a7c6d91f2837f4ab12e9c8d7a6f3c2b1a9d8e7f6c4";
 // Register - with hashing
 export const registerUser = async (req, res) => {
   try {
@@ -136,4 +138,31 @@ export const getMe = async (req, res) => {
 export const logoutUser = (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ success: true, message: "Logged out successfully" });
+};
+
+// =========================================
+// Get All Users - Only Admin Allowed
+export const getAllUsers = async (req, res) => {
+  try {
+    // Ye req.user protect middleware se aaya hai
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin only!",
+      });
+    }
+
+    const users = await User.find().select("-password"); // password hide kar diya
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
 };
