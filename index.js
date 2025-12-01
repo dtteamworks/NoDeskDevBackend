@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import connectDB from "./src/database/connectDB.js";
 import developerRoutes from "./src/routes/developerRoutes.js";
@@ -16,6 +17,9 @@ const app = express();
 if (process.env.NODE_ENV === "production") {
   job.start();
 }
+
+// ===== Middleware =====
+app.use(cookieParser());
 
 app.use(
   cors({

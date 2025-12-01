@@ -1,6 +1,9 @@
 import User from "../models/User.js"
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-// Register / Signup (plain password - no hashing)
+const JWT_SECRET = process.env.JWT_SECRET || "1f92ab8e4c31b7c9d2f4e8a7c6d91f2837f4ab12e9c8d7a6f3c2b1a9d8e7f6c4";
+// Register - with hashing
 export const registerUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -14,21 +17,40 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // Special admin emails
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Admin emails
     const adminEmails = ["itsanas474@gmail.com", "anas000mal@gmail.com"];
     const role = adminEmails.includes(email.toLowerCase()) ? "admin" : "user";
 
-    // Create new user
+    // Create user
     const newUser = await User.create({
       email,
-      password, // saved as plain text (as you asked)
+      password: hashedPassword, // ab hashed save hoga
       role,
+    });
+
+    // Create JWT token (30 days expiry)
+    const token = jwt.sign(
+      { id: newUser._id, email: newUser.email, role: newUser.role },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    // Send cookie (HttpOnly + Secure)
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // true on HTTPS (Render)
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      data: {
+      message: "User registered & logged in successfully!",
+      user: {
         id: newUser._id,
         email: newUser.email,
         role: newUser.role,
@@ -43,7 +65,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// Login (plain password compare)
+// Login - with proper compare
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -56,18 +78,34 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Plain text compare (no bcrypt)
-    if (user.password !== password) {
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
       });
     }
 
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    // Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
     res.status(200).json({
       success: true,
-      message: "Login successful",
-      data: {
+      message: "Login successful! Welcome back",
+      user: {
         id: user._id,
         email: user.email,
         role: user.role,
@@ -81,16 +119,21 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// Get all users (optional - for admin panel later)
-export const getAllUsers = async (req, res) => {
+// Get Current Logged In User (Protected route ke liye useful)
+export const getMe = async (req, res) => {
   try {
-    const users = await User.find().select("-password"); // hide password
+    const user = await User.findById(req.user.id).select("-password");
     res.status(200).json({
       success: true,
-      count: users.length,
-      data: users,
+      user,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error" });
   }
+};
+
+// Logout (cookie clear kar dega)
+export const logoutUser = (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({ success: true, message: "Logged out successfully" });
 };
