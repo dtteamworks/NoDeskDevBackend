@@ -1,5 +1,4 @@
-// src/controllers/userController.js
-import User from "../models/User.js";
+import User from "../models/User.js"
 
 // Register / Signup (plain password - no hashing)
 export const registerUser = async (req, res) => {
