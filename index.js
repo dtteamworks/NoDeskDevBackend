@@ -15,6 +15,7 @@ import codeInstallBookingRoutes from "./src/routes/bookings/codeInstallBookingRo
 import techConsultRoutes from "./src/routes/bookings/techConsultRoutes.js";
 import technicalMaintenanceRoutes from "./src/routes/bookings/technicalMaintenanceRoutes.js";
 import errorFixingRoutes from "./src/routes/bookings/errorFixingRoutes.js";
+import projectEstimationRoutes from "./src/routes/bookings/projectEstimationRoutes.js";
 
 import job from "./src/config/cron.js";
 
@@ -64,6 +65,7 @@ app.use("/api", codeInstallBookingRoutes);
 app.use("/api", techConsultRoutes);
 app.use("/api", technicalMaintenanceRoutes);
 app.use("/api", errorFixingRoutes);
+app.use("/api", projectEstimationRoutes);
 
 // Health check route (Render ko pata chale server alive hai)
 app.get("/health", (req, res) => {
