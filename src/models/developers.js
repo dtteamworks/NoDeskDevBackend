@@ -87,19 +87,6 @@ const developerSchema = new mongoose.Schema(
   }
 );
 
-// Pre-save hook to auto-generate slug from name
-developerSchema.pre("save", function (next) {
-  if (this.isModified("name") || !this.slug) {
-    this.slug = this.name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w\-]+/g, "")
-      .replace(/\-\-+/g, "-");
-  }
-  next();
-});
-
 // Index for faster queries
 developerSchema.index({ skills: 1, level: 1, available: 1 });
 

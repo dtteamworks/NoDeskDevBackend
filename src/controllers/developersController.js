@@ -1,9 +1,30 @@
 import Developer from "../models/developers.js";
 
-// Add new developer (slug auto-generated via pre-save hook)
+// Add new developer → slug manually bana denge
 export const addDeveloper = async (req, res) => {
   try {
-    const newDev = await Developer.create(req.body);
+    // Manually generate slug before create
+    const slug = req.body.name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-");
+
+    // Check if slug already exists
+    const existing = await Developer.findOne({ slug });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Developer with this name already exists (slug conflict)",
+      });
+    }
+
+    const newDev = await Developer.create({
+      ...req.body,
+      slug, // manually set
+    });
+
     res.status(201).json({
       success: true,
       message: "Developer successfully added!",
@@ -12,7 +33,9 @@ export const addDeveloper = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: "Invalid data provided",
+      message: error.message.includes("duplicate key")
+        ? "Developer with this name already exists"
+        : "Invalid data provided",
       error: error.message,
     });
   }
@@ -83,7 +106,7 @@ export const getDeveloperBySlug = async (req, res) => {
   }
 };
 
-// Update developer by ID (use save() to trigger pre-save hook for slug)
+// Update developer → agar name change ho to slug bhi update
 export const updateDeveloper = async (req, res) => {
   try {
     const developer = await Developer.findById(req.params.id);
@@ -94,10 +117,27 @@ export const updateDeveloper = async (req, res) => {
       });
     }
 
-    // Update fields
-    Object.assign(developer, req.body);
+    // Agar name change ho raha hai to naya slug banao
+    if (req.body.name && req.body.name !== developer.name) {
+      const newSlug = req.body.name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-");
 
-    // Save to trigger pre-save hook (regenerates slug if name changed)
+      const existing = await Developer.findOne({ slug: newSlug });
+      if (existing && existing._id.toString() !== req.params.id) {
+        return res.status(400).json({
+          success: false,
+          message: "Another developer with this name already exists",
+        });
+      }
+
+      req.body.slug = newSlug; // update slug
+    }
+
+    Object.assign(developer, req.body);
     const updatedDev = await developer.save();
 
     res.status(200).json({
