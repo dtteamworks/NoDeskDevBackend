@@ -18,6 +18,7 @@ import errorFixingRoutes from "./src/routes/bookings/errorFixingRoutes.js";
 import projectEstimationRoutes from "./src/routes/bookings/projectEstimationRoutes.js";
 import contactRoutes from "./src/routes/contactRoutes.js";
 import careerRoutes from "./src/routes/careerRoutes.js";
+import codeNScriptCardsRoutes from "./src/routes/codeNScriptCardsRoutes.js";
 
 import job from "./src/config/cron.js";
 
@@ -70,6 +71,8 @@ app.use("/api", errorFixingRoutes);
 app.use("/api", projectEstimationRoutes);
 app.use("/api", contactRoutes);
 app.use("/api", careerRoutes);
+app.use("/api", codeNScriptCardsRoutes);
+
 
 // Health check route (Render ko pata chale server alive hai)
 app.get("/health", (req, res) => {
