@@ -172,4 +172,4 @@ const CodeNScriptCards = mongoose.model(
   codeNScriptCardsSchema
 );
 
-module.exports = CodeNScriptCards;
+export default CodeNScriptCards;
